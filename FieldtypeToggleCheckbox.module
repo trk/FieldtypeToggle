@@ -1,0 +1,53 @@
+<?php namespace ProcessWire;
+
+/**
+ * Class FieldtypeToggleCheckbox
+ *
+ * @package ProcessWire
+ */
+class FieldtypeToggleCheckbox extends FieldtypeCheckbox {
+
+	public static function getModuleInfo() {
+		return array(
+		    'title' => __('Toggle Switch (checkbox)'),
+			'version' => 1,
+            'summary' => __('Turn ProcessWire radio and checkbox input fields into fancy toggle switches.'),
+            'installs' => array(
+                'InputfieldToggleCheckbox'
+            ),
+        );
+	}
+
+    /**
+     * @param Page $page
+     * @param Field $field
+     * @param null $value
+     * @param string $property
+     * @return MarkupFieldtype|string
+     */
+	public function ___markupValue(Page $page, Field $field, $value = null, $property = '') {
+		if(is_null($value)) $value = $page->get($field->name); 
+		$checked = $value ? " checked='checked'" : "";
+		$textValue = $value ? '☒': '☐'; // utf-8 checkbox (the ☑ is also works for checked, but not quite as visible)
+		// note: the span below ensures a value survives even if markupValue has tags stripped from it
+		return "<input class='inputfield-toggle' type='checkbox' $checked disabled='disabled' /><span style='display:none'>$textValue</span>";
+	}
+
+    /**
+     * @param Page $page
+     * @param Field $field
+     * @return null|Inputfield|InputfieldCheckbox|InputfieldToggle
+     * @throws WirePermissionException
+     */
+	public function getInputfield(Page $page, Field $field) {
+		/** @var InputfieldToggle $inputfield */
+		$inputfield = $this->modules->get('InputfieldToggleCheckbox');
+		$inputfield->set('checkedValue', 1); 
+		$inputfield->set('uncheckedValue', 0); 
+		$value = $page->get($field->name); 
+		if($value) $inputfield->attr('checked', 'checked'); 
+		$inputfield->class = $this->className();
+		return $inputfield; 
+	}
+}
+

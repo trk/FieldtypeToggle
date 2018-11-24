@@ -1,0 +1,120 @@
+<?php namespace ProcessWire;
+
+/**
+ * Class InputfieldToggleCheckbox
+ *
+ * @package ProcessWire
+ */
+class InputfieldToggleCheckbox extends InputfieldCheckbox {
+
+	public static function getModuleInfo() {
+		return array(
+			'title' => __('Toggle Switch (checkbox)', __FILE__), // Module Title
+            'summary' => __('Turn ProcessWire radio and checkbox input fields into fancy toggle switches.'),
+			'version' => 1,
+            'requires' => array(
+                'FieldtypeToggleCheckbox',
+            )
+        );
+	}
+
+    /**
+     * InputfieldToggle constructor.
+     */
+    public function __construct() {
+        $this->set('toggleSize', '');
+
+        parent::__construct();
+    }
+
+    /**
+     * Render ready
+     *
+     * @param Inputfield $parent
+     * @param bool $renderValueMode
+     * @return bool
+     * @throws WireException
+     *
+     */
+    public function renderReady(Inputfield $parent = null, $renderValueMode = false) {
+        $config = $this->wire('config');
+        $config->styles->add($config->urls->InputfieldToggleCheckbox . 'InputfieldToggle.css');
+        return parent::renderReady($parent, $renderValueMode);
+    }
+
+    /**
+     * Render toggle checkbox input
+     *
+     * @return string
+     * @throws WireException
+     */
+	public function ___render() {
+		$label = '';
+		$user = $this->wire('user');
+		
+		if($user->language) $label = $this->getSetting("checkboxLabel$user->language"); 
+		if(!$label) $label = $this->getSetting("checkboxLabel");
+		if(!$label && $this->checkedValueIsLabel) $label = $this->checkedValue;
+		if(!$label) $label = $this->getSetting('label2'); 
+		
+		$this->set('skipLabel', $this->description || $label ? Inputfield::skipLabelFor : Inputfield::skipLabelHeader);
+		if(!$label) $label = $this->label;
+
+		$attrs = $this->getAttributes();
+		$attrs['value'] = $this->checkedValue; 
+		
+		if($this->getSetting('entityEncodeLabel') !== false) {
+			$label = $this->entityEncode($label);
+		}
+		
+		$out = "<label class='inputfield-toggle'><span class='pw-no-select'>$label</span><input class='inputfield-toggle " . $this->getSetting("toggleSize") . "' type='checkbox' " . $this->getAttributesString($attrs) . " />" . "</label>";
+		
+		return $out; 
+	}
+
+    /**
+     * Render value only
+     *
+     * @return array|float|int|object|Inputfield|string
+     * @throws WireException
+     */
+	public function ___renderValue() {
+		$value = $this->attr('value');
+		if($value != self::uncheckedValueDefault && $value != $this->uncheckedValue) {
+			$value = $this->wire('sanitizer')->entities($this->checkedValue); 
+			$value = $value === "1" ? $this->_('Checked') : $value;
+			$value = "<i class='fa fa-check-square-o'></i> $value";
+		} else {
+			$value = $this->wire('sanitizer')->entities($this->uncheckedValue);
+			$value = empty($value) ? $this->_('Not checked') : $value;
+			$value = "<i class='fa fa-square-o'></i> $value";
+		}
+		return $value; 
+	}
+
+    /**
+     * Configure Toggle Checkbox Field
+     *
+     * @return InputfieldWrapper
+     * @throws WirePermissionException
+     */
+    public function ___getConfigInputfields() {
+
+        $inputfields = parent::___getConfigInputfields();
+
+        /** @var InputfieldSelect $field */
+        $field = $this->modules->get('InputfieldSelect');
+        $field->attr('name', 'toggleSize');
+        $field->label = $this->_('Toggle Button Size');
+        $field->icon = 'thumb-tack';
+        $field->setAttribute('value', $this->toggleSize);
+        $field->addOption('xs', '12x22');
+        $field->addOption('sm', '32x16');
+        $field->addOption('md', '44x22 (default)');
+        $field->addOption('lg', '64x32');
+        $field->defaultValue = 'md';
+        $inputfields->add($field);
+
+        return $inputfields;
+    }
+}
